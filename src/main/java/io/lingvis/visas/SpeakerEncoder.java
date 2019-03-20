@@ -31,6 +31,8 @@ public class SpeakerEncoder {
 
         speakerEncoder.recursiveWalk(input.toPath(), "course", metadata -> metadata.courseName);
 
+        speakerEncoder.recursiveWalk(input.toPath(), "studentYear", metadata -> metadata.studentId + "-" + metadata.year);
+
         LOGGER.info("finished");
     }
 
