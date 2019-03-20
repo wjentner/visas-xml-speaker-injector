@@ -24,3 +24,8 @@ hs_err_pid*
 /visas-xml-speaker-injector.iml
 /.idea/
 /data/
+/target/
+/.vscode/
+.classpath
+.project
+/.settings/
