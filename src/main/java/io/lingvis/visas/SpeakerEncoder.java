@@ -23,11 +23,15 @@ public class SpeakerEncoder {
     private static File out = new File("./data/output");
 
     public static void main(String[] args) throws IOException {
+        LOGGER.info("started");
+
         SpeakerEncoder speakerEncoder = new SpeakerEncoder();
 
         speakerEncoder.recursiveWalk(input.toPath(), "studentId", metadata -> metadata.studentId);
 
         speakerEncoder.recursiveWalk(input.toPath(), "course", metadata -> metadata.courseName);
+
+        LOGGER.info("finished");
     }
 
     private void recursiveWalk(Path path, String outputFolder, Function<Metadata, String> conversion) throws IOException {
