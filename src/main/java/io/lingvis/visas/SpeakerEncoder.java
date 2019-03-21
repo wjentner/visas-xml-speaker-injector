@@ -2,14 +2,20 @@ package io.lingvis.visas;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Created by Wolfgang Jentner (University of Konstanz) [wolfgang.jentner@uni.kn] on 3/18/2019.
@@ -22,7 +28,7 @@ public class SpeakerEncoder {
 
     private static File out = new File("./data/output");
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
         LOGGER.info("started");
 
         SpeakerEncoder speakerEncoder = new SpeakerEncoder();
@@ -36,26 +42,21 @@ public class SpeakerEncoder {
         LOGGER.info("finished");
     }
 
-    private void recursiveWalk(Path path, String outputFolder, Function<Metadata, String> conversion) throws IOException {
-        Files.list(path).forEach(p -> {
+    private void recursiveWalk(Path path, String outputFolder, Function<Metadata, String> conversion) throws IOException, ParserConfigurationException, SAXException {
+        List<Path> files = Files.list(path).collect(Collectors.toList());
+        for(Path p : files) {
             File f = p.toFile();
             if(f.isDirectory()) {
-                try {
-                    recursiveWalk(p, outputFolder, conversion);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                recursiveWalk(p, outputFolder, conversion);
             } else if(f.getName().endsWith(".xml")) {
-                try {
-                    processFile(f, outputFolder, conversion);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                processFile(f, outputFolder, conversion);
             }
-        });
+        }
     }
 
-    private void processFile(File f, String outputFolder, Function<Metadata, String> conversion) throws IOException {
+    private void processFile(File f, String outputFolder, Function<Metadata, String> conversion) throws IOException, ParserConfigurationException, SAXException {
+        checkWellFormedness(f);
+
         Metadata m = getInformation(f.getName());
 
         String contents = new String(Files.readAllBytes(f.toPath()));
@@ -72,6 +73,18 @@ public class SpeakerEncoder {
         File outFile = new File(outFolder, f.getName());
 
         Files.write(outFile.toPath(), contents.getBytes());
+    }
+
+    private static void checkWellFormedness(File f) throws ParserConfigurationException, IOException, SAXException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setValidating(false);
+        factory.setNamespaceAware(true);
+
+        DocumentBuilder builder = factory.newDocumentBuilder();
+
+//        builder.setErrorHandler(new SimpleErrorHandler());
+// the "parse" method also validates XML, will throw an exception if misformatted
+        builder.parse(f);
     }
 
     private Metadata getInformation(String filename) {
